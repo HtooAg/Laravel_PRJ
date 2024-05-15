@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+    <nav class="navbar bg-dark navbar-dark">
+        <div class="container" style="max-width: 600px">
+            <a href="#" class="navbar-brand">Category</a>
+        </div>
+    </nav>
+    
+    <div class="container" style="max-width: 600px">
+        <form id="add" class="input-group my-4">
+            <input type="text" class="form-control">
+            <button class="btn btn-dark">Add</button>
+        </form>
+
+        <ul id="list" class="list-group"></ul>
+    </div>
+
+    <script>
+        const api = "http://localhost:8000/api/categories";
+
+        fetch(api)
+            .then(res => res.json())
+            .then(data => data.map(item => {
+                createItem(item);
+            }));
+
+        document.querySelector("#add").onsubmit = e => {
+            e.preventDefault();
+
+            let name = document.querySelector("input").value;
+            if(!name) return false;
+
+            fetch(api, {
+                method: 'post',
+                body: JSON.stringify({ name }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(res => res.json())
+            .then(item => createItem(item));
+        }
+
+        function createItem(item) {
+            let li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<span>${item.name}</span>`;
+
+            let del = document.createElement("a");
+            del.classList.add("fa-solid", "fa-trash", "float-end", "text-danger");
+            del.setAttribute("href", "#");
+            del.onclick = () => {
+                fetch(`${api}/${item.id}`, { method: 'delete' });
+                li.remove();
+            }
+            li.appendChild(del);
+
+            let edit = document.createElement("a");
+            edit.classList.add("fa-solid", "fa-edit", "float-start", "me-3");
+            edit.setAttribute("href", "#");
+            edit.onclick = () => {
+                let currentName = li.querySelector("span").textContent;
+                let updatedName = prompt("Enter name", currentName);
+                if(updatedName) {
+                    fetch(`${api}/${item.id}`, {
+                        method: "put",
+                        body: JSON.stringify({ name: updatedName }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                    li.querySelector("span").textContent = updatedName;
+                }
+            }
+            li.appendChild(edit);
+
+            document.querySelector("#list").appendChild(li);
+        }
+    </script>
+</body>
+</html>
